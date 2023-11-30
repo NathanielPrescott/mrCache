@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package rediscache;
+
+service RedisCache {
+  rpc Get(Key) returns (Value);
+}
+
+message Key {
+  string key = 1;
+}
+
+message Value {
+  string value = 1;
+}
