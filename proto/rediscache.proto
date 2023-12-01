@@ -3,10 +3,18 @@ syntax = "proto3";
 package rediscache;
 
 service RedisCache {
-  rpc GET(Key) returns (Value);
-  rpc MGET(Keys) returns (Values);
+  // Strings
   rpc SET(KeyValue) returns (Effect);
   rpc MSET(KeyValues) returns (Effects);
+  rpc GET(Key) returns (Value);
+  rpc MGET(Keys) returns (Values);
+
+  // Hashes (Should I rename the messages instead of reusing the key/value ones?)
+  rpc HSET(HashedKeyValues) returns (Effect);
+  rpc HMGET(HashedValues) returns (Values);
+  rpc HGETALL(Key) returns (Values);
+  rpc HKEYS(Key) returns (Keys);
+  rpc HVALS(Key) returns (Values);
 }
 
 message Key {
@@ -32,6 +40,16 @@ message KeyValue {
 
 message KeyValues {
   repeated KeyValue keyValues = 1;
+}
+
+message HashedKeyValues {
+  Key key = 1;
+  KeyValues keyValues = 2;
+}
+
+message HashedValues {
+  Key key = 1;
+  Values values = 2;
 }
 
 message Effect {
