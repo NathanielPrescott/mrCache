@@ -6,9 +6,63 @@ pub struct Key {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Keys {
+    #[prost(message, repeated, tag = "1")]
+    pub keys: ::prost::alloc::vec::Vec<Key>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Value {
     #[prost(string, tag = "1")]
     pub value: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Values {
+    #[prost(message, repeated, tag = "1")]
+    pub values: ::prost::alloc::vec::Vec<Value>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct KeyValue {
+    #[prost(string, tag = "1")]
+    pub key: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub value: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct KeyValues {
+    #[prost(message, repeated, tag = "1")]
+    pub key_values: ::prost::alloc::vec::Vec<KeyValue>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct HashedKeyValues {
+    #[prost(message, optional, tag = "1")]
+    pub key: ::core::option::Option<Key>,
+    #[prost(message, optional, tag = "2")]
+    pub key_values: ::core::option::Option<KeyValues>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct HashedValues {
+    #[prost(message, optional, tag = "1")]
+    pub key: ::core::option::Option<Key>,
+    #[prost(message, optional, tag = "2")]
+    pub values: ::core::option::Option<Values>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Effect {
+    #[prost(string, tag = "1")]
+    pub effect: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Effects {
+    #[prost(message, repeated, tag = "1")]
+    pub effects: ::prost::alloc::vec::Vec<Effect>,
 }
 /// Generated server implementations.
 pub mod redis_cache_server {
@@ -17,10 +71,44 @@ pub mod redis_cache_server {
     /// Generated trait containing gRPC methods that should be implemented for use with RedisCacheServer.
     #[async_trait]
     pub trait RedisCache: Send + Sync + 'static {
+        /// Strings
+        async fn set(
+            &self,
+            request: tonic::Request<super::KeyValue>,
+        ) -> std::result::Result<tonic::Response<super::Effect>, tonic::Status>;
+        async fn mset(
+            &self,
+            request: tonic::Request<super::KeyValues>,
+        ) -> std::result::Result<tonic::Response<super::Effects>, tonic::Status>;
         async fn get(
             &self,
             request: tonic::Request<super::Key>,
         ) -> std::result::Result<tonic::Response<super::Value>, tonic::Status>;
+        async fn mget(
+            &self,
+            request: tonic::Request<super::Keys>,
+        ) -> std::result::Result<tonic::Response<super::Values>, tonic::Status>;
+        /// Hashes
+        async fn hset(
+            &self,
+            request: tonic::Request<super::HashedKeyValues>,
+        ) -> std::result::Result<tonic::Response<super::Effect>, tonic::Status>;
+        async fn hmget(
+            &self,
+            request: tonic::Request<super::HashedValues>,
+        ) -> std::result::Result<tonic::Response<super::Values>, tonic::Status>;
+        async fn hgetall(
+            &self,
+            request: tonic::Request<super::Key>,
+        ) -> std::result::Result<tonic::Response<super::Values>, tonic::Status>;
+        async fn hkeys(
+            &self,
+            request: tonic::Request<super::Key>,
+        ) -> std::result::Result<tonic::Response<super::Keys>, tonic::Status>;
+        async fn hvals(
+            &self,
+            request: tonic::Request<super::Key>,
+        ) -> std::result::Result<tonic::Response<super::Values>, tonic::Status>;
     }
     #[derive(Debug)]
     pub struct RedisCacheServer<T: RedisCache> {
@@ -101,11 +189,99 @@ pub mod redis_cache_server {
         fn call(&mut self, req: http::Request<B>) -> Self::Future {
             let inner = self.inner.clone();
             match req.uri().path() {
-                "/rediscache.RedisCache/Get" => {
+                "/rediscache.RedisCache/SET" => {
                     #[allow(non_camel_case_types)]
-                    struct GetSvc<T: RedisCache>(pub Arc<T>);
+                    struct SETSvc<T: RedisCache>(pub Arc<T>);
+                    impl<T: RedisCache> tonic::server::UnaryService<super::KeyValue>
+                    for SETSvc<T> {
+                        type Response = super::Effect;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::KeyValue>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as RedisCache>::set(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = SETSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/rediscache.RedisCache/MSET" => {
+                    #[allow(non_camel_case_types)]
+                    struct MSETSvc<T: RedisCache>(pub Arc<T>);
+                    impl<T: RedisCache> tonic::server::UnaryService<super::KeyValues>
+                    for MSETSvc<T> {
+                        type Response = super::Effects;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::KeyValues>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as RedisCache>::mset(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = MSETSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/rediscache.RedisCache/GET" => {
+                    #[allow(non_camel_case_types)]
+                    struct GETSvc<T: RedisCache>(pub Arc<T>);
                     impl<T: RedisCache> tonic::server::UnaryService<super::Key>
-                    for GetSvc<T> {
+                    for GETSvc<T> {
                         type Response = super::Value;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -129,7 +305,273 @@ pub mod redis_cache_server {
                     let inner = self.inner.clone();
                     let fut = async move {
                         let inner = inner.0;
-                        let method = GetSvc(inner);
+                        let method = GETSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/rediscache.RedisCache/MGET" => {
+                    #[allow(non_camel_case_types)]
+                    struct MGETSvc<T: RedisCache>(pub Arc<T>);
+                    impl<T: RedisCache> tonic::server::UnaryService<super::Keys>
+                    for MGETSvc<T> {
+                        type Response = super::Values;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::Keys>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as RedisCache>::mget(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = MGETSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/rediscache.RedisCache/HSET" => {
+                    #[allow(non_camel_case_types)]
+                    struct HSETSvc<T: RedisCache>(pub Arc<T>);
+                    impl<
+                        T: RedisCache,
+                    > tonic::server::UnaryService<super::HashedKeyValues>
+                    for HSETSvc<T> {
+                        type Response = super::Effect;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::HashedKeyValues>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as RedisCache>::hset(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = HSETSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/rediscache.RedisCache/HMGET" => {
+                    #[allow(non_camel_case_types)]
+                    struct HMGETSvc<T: RedisCache>(pub Arc<T>);
+                    impl<T: RedisCache> tonic::server::UnaryService<super::HashedValues>
+                    for HMGETSvc<T> {
+                        type Response = super::Values;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::HashedValues>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as RedisCache>::hmget(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = HMGETSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/rediscache.RedisCache/HGETALL" => {
+                    #[allow(non_camel_case_types)]
+                    struct HGETALLSvc<T: RedisCache>(pub Arc<T>);
+                    impl<T: RedisCache> tonic::server::UnaryService<super::Key>
+                    for HGETALLSvc<T> {
+                        type Response = super::Values;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::Key>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as RedisCache>::hgetall(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = HGETALLSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/rediscache.RedisCache/HKEYS" => {
+                    #[allow(non_camel_case_types)]
+                    struct HKEYSSvc<T: RedisCache>(pub Arc<T>);
+                    impl<T: RedisCache> tonic::server::UnaryService<super::Key>
+                    for HKEYSSvc<T> {
+                        type Response = super::Keys;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::Key>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as RedisCache>::hkeys(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = HKEYSSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/rediscache.RedisCache/HVALS" => {
+                    #[allow(non_camel_case_types)]
+                    struct HVALSSvc<T: RedisCache>(pub Arc<T>);
+                    impl<T: RedisCache> tonic::server::UnaryService<super::Key>
+                    for HVALSSvc<T> {
+                        type Response = super::Values;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::Key>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as RedisCache>::hvals(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = HVALSSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
