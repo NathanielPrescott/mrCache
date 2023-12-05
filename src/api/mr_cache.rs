@@ -65,12 +65,12 @@ pub struct Effects {
     pub effects: ::prost::alloc::vec::Vec<Effect>,
 }
 /// Generated server implementations.
-pub mod redis_cache_server {
+pub mod mr_cache_server {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
-    /// Generated trait containing gRPC methods that should be implemented for use with RedisCacheServer.
+    /// Generated trait containing gRPC methods that should be implemented for use with MrCacheServer.
     #[async_trait]
-    pub trait RedisCache: Send + Sync + 'static {
+    pub trait MrCache: Send + Sync + 'static {
         /// Strings
         async fn set(
             &self,
@@ -88,7 +88,7 @@ pub mod redis_cache_server {
             &self,
             request: tonic::Request<super::Keys>,
         ) -> std::result::Result<tonic::Response<super::Values>, tonic::Status>;
-        /// Hashes
+        /// Hashes (Should I rename the messages instead of reusing the key/value ones?)
         async fn hset(
             &self,
             request: tonic::Request<super::HashedKeyValues>,
@@ -111,7 +111,7 @@ pub mod redis_cache_server {
         ) -> std::result::Result<tonic::Response<super::Values>, tonic::Status>;
     }
     #[derive(Debug)]
-    pub struct RedisCacheServer<T: RedisCache> {
+    pub struct MrCacheServer<T: MrCache> {
         inner: _Inner<T>,
         accept_compression_encodings: EnabledCompressionEncodings,
         send_compression_encodings: EnabledCompressionEncodings,
@@ -119,7 +119,7 @@ pub mod redis_cache_server {
         max_encoding_message_size: Option<usize>,
     }
     struct _Inner<T>(Arc<T>);
-    impl<T: RedisCache> RedisCacheServer<T> {
+    impl<T: MrCache> MrCacheServer<T> {
         pub fn new(inner: T) -> Self {
             Self::from_arc(Arc::new(inner))
         }
@@ -171,9 +171,9 @@ pub mod redis_cache_server {
             self
         }
     }
-    impl<T, B> tonic::codegen::Service<http::Request<B>> for RedisCacheServer<T>
+    impl<T, B> tonic::codegen::Service<http::Request<B>> for MrCacheServer<T>
     where
-        T: RedisCache,
+        T: MrCache,
         B: Body + Send + 'static,
         B::Error: Into<StdError> + Send + 'static,
     {
@@ -189,10 +189,10 @@ pub mod redis_cache_server {
         fn call(&mut self, req: http::Request<B>) -> Self::Future {
             let inner = self.inner.clone();
             match req.uri().path() {
-                "/rediscache.RedisCache/SET" => {
+                "/mr_cache.MrCache/SET" => {
                     #[allow(non_camel_case_types)]
-                    struct SETSvc<T: RedisCache>(pub Arc<T>);
-                    impl<T: RedisCache> tonic::server::UnaryService<super::KeyValue>
+                    struct SETSvc<T: MrCache>(pub Arc<T>);
+                    impl<T: MrCache> tonic::server::UnaryService<super::KeyValue>
                     for SETSvc<T> {
                         type Response = super::Effect;
                         type Future = BoxFuture<
@@ -205,7 +205,7 @@ pub mod redis_cache_server {
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as RedisCache>::set(&inner, request).await
+                                <T as MrCache>::set(&inner, request).await
                             };
                             Box::pin(fut)
                         }
@@ -233,10 +233,10 @@ pub mod redis_cache_server {
                     };
                     Box::pin(fut)
                 }
-                "/rediscache.RedisCache/MSET" => {
+                "/mr_cache.MrCache/MSET" => {
                     #[allow(non_camel_case_types)]
-                    struct MSETSvc<T: RedisCache>(pub Arc<T>);
-                    impl<T: RedisCache> tonic::server::UnaryService<super::KeyValues>
+                    struct MSETSvc<T: MrCache>(pub Arc<T>);
+                    impl<T: MrCache> tonic::server::UnaryService<super::KeyValues>
                     for MSETSvc<T> {
                         type Response = super::Effects;
                         type Future = BoxFuture<
@@ -249,7 +249,7 @@ pub mod redis_cache_server {
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as RedisCache>::mset(&inner, request).await
+                                <T as MrCache>::mset(&inner, request).await
                             };
                             Box::pin(fut)
                         }
@@ -277,10 +277,10 @@ pub mod redis_cache_server {
                     };
                     Box::pin(fut)
                 }
-                "/rediscache.RedisCache/GET" => {
+                "/mr_cache.MrCache/GET" => {
                     #[allow(non_camel_case_types)]
-                    struct GETSvc<T: RedisCache>(pub Arc<T>);
-                    impl<T: RedisCache> tonic::server::UnaryService<super::Key>
+                    struct GETSvc<T: MrCache>(pub Arc<T>);
+                    impl<T: MrCache> tonic::server::UnaryService<super::Key>
                     for GETSvc<T> {
                         type Response = super::Value;
                         type Future = BoxFuture<
@@ -293,7 +293,7 @@ pub mod redis_cache_server {
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as RedisCache>::get(&inner, request).await
+                                <T as MrCache>::get(&inner, request).await
                             };
                             Box::pin(fut)
                         }
@@ -321,10 +321,10 @@ pub mod redis_cache_server {
                     };
                     Box::pin(fut)
                 }
-                "/rediscache.RedisCache/MGET" => {
+                "/mr_cache.MrCache/MGET" => {
                     #[allow(non_camel_case_types)]
-                    struct MGETSvc<T: RedisCache>(pub Arc<T>);
-                    impl<T: RedisCache> tonic::server::UnaryService<super::Keys>
+                    struct MGETSvc<T: MrCache>(pub Arc<T>);
+                    impl<T: MrCache> tonic::server::UnaryService<super::Keys>
                     for MGETSvc<T> {
                         type Response = super::Values;
                         type Future = BoxFuture<
@@ -337,7 +337,7 @@ pub mod redis_cache_server {
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as RedisCache>::mget(&inner, request).await
+                                <T as MrCache>::mget(&inner, request).await
                             };
                             Box::pin(fut)
                         }
@@ -365,12 +365,10 @@ pub mod redis_cache_server {
                     };
                     Box::pin(fut)
                 }
-                "/rediscache.RedisCache/HSET" => {
+                "/mr_cache.MrCache/HSET" => {
                     #[allow(non_camel_case_types)]
-                    struct HSETSvc<T: RedisCache>(pub Arc<T>);
-                    impl<
-                        T: RedisCache,
-                    > tonic::server::UnaryService<super::HashedKeyValues>
+                    struct HSETSvc<T: MrCache>(pub Arc<T>);
+                    impl<T: MrCache> tonic::server::UnaryService<super::HashedKeyValues>
                     for HSETSvc<T> {
                         type Response = super::Effect;
                         type Future = BoxFuture<
@@ -383,7 +381,7 @@ pub mod redis_cache_server {
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as RedisCache>::hset(&inner, request).await
+                                <T as MrCache>::hset(&inner, request).await
                             };
                             Box::pin(fut)
                         }
@@ -411,10 +409,10 @@ pub mod redis_cache_server {
                     };
                     Box::pin(fut)
                 }
-                "/rediscache.RedisCache/HMGET" => {
+                "/mr_cache.MrCache/HMGET" => {
                     #[allow(non_camel_case_types)]
-                    struct HMGETSvc<T: RedisCache>(pub Arc<T>);
-                    impl<T: RedisCache> tonic::server::UnaryService<super::HashedValues>
+                    struct HMGETSvc<T: MrCache>(pub Arc<T>);
+                    impl<T: MrCache> tonic::server::UnaryService<super::HashedValues>
                     for HMGETSvc<T> {
                         type Response = super::Values;
                         type Future = BoxFuture<
@@ -427,7 +425,7 @@ pub mod redis_cache_server {
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as RedisCache>::hmget(&inner, request).await
+                                <T as MrCache>::hmget(&inner, request).await
                             };
                             Box::pin(fut)
                         }
@@ -455,10 +453,10 @@ pub mod redis_cache_server {
                     };
                     Box::pin(fut)
                 }
-                "/rediscache.RedisCache/HGETALL" => {
+                "/mr_cache.MrCache/HGETALL" => {
                     #[allow(non_camel_case_types)]
-                    struct HGETALLSvc<T: RedisCache>(pub Arc<T>);
-                    impl<T: RedisCache> tonic::server::UnaryService<super::Key>
+                    struct HGETALLSvc<T: MrCache>(pub Arc<T>);
+                    impl<T: MrCache> tonic::server::UnaryService<super::Key>
                     for HGETALLSvc<T> {
                         type Response = super::Values;
                         type Future = BoxFuture<
@@ -471,7 +469,7 @@ pub mod redis_cache_server {
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as RedisCache>::hgetall(&inner, request).await
+                                <T as MrCache>::hgetall(&inner, request).await
                             };
                             Box::pin(fut)
                         }
@@ -499,10 +497,10 @@ pub mod redis_cache_server {
                     };
                     Box::pin(fut)
                 }
-                "/rediscache.RedisCache/HKEYS" => {
+                "/mr_cache.MrCache/HKEYS" => {
                     #[allow(non_camel_case_types)]
-                    struct HKEYSSvc<T: RedisCache>(pub Arc<T>);
-                    impl<T: RedisCache> tonic::server::UnaryService<super::Key>
+                    struct HKEYSSvc<T: MrCache>(pub Arc<T>);
+                    impl<T: MrCache> tonic::server::UnaryService<super::Key>
                     for HKEYSSvc<T> {
                         type Response = super::Keys;
                         type Future = BoxFuture<
@@ -515,7 +513,7 @@ pub mod redis_cache_server {
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as RedisCache>::hkeys(&inner, request).await
+                                <T as MrCache>::hkeys(&inner, request).await
                             };
                             Box::pin(fut)
                         }
@@ -543,10 +541,10 @@ pub mod redis_cache_server {
                     };
                     Box::pin(fut)
                 }
-                "/rediscache.RedisCache/HVALS" => {
+                "/mr_cache.MrCache/HVALS" => {
                     #[allow(non_camel_case_types)]
-                    struct HVALSSvc<T: RedisCache>(pub Arc<T>);
-                    impl<T: RedisCache> tonic::server::UnaryService<super::Key>
+                    struct HVALSSvc<T: MrCache>(pub Arc<T>);
+                    impl<T: MrCache> tonic::server::UnaryService<super::Key>
                     for HVALSSvc<T> {
                         type Response = super::Values;
                         type Future = BoxFuture<
@@ -559,7 +557,7 @@ pub mod redis_cache_server {
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as RedisCache>::hvals(&inner, request).await
+                                <T as MrCache>::hvals(&inner, request).await
                             };
                             Box::pin(fut)
                         }
@@ -602,7 +600,7 @@ pub mod redis_cache_server {
             }
         }
     }
-    impl<T: RedisCache> Clone for RedisCacheServer<T> {
+    impl<T: MrCache> Clone for MrCacheServer<T> {
         fn clone(&self) -> Self {
             let inner = self.inner.clone();
             Self {
@@ -614,7 +612,7 @@ pub mod redis_cache_server {
             }
         }
     }
-    impl<T: RedisCache> Clone for _Inner<T> {
+    impl<T: MrCache> Clone for _Inner<T> {
         fn clone(&self) -> Self {
             Self(Arc::clone(&self.0))
         }
@@ -624,7 +622,7 @@ pub mod redis_cache_server {
             write!(f, "{:?}", self.0)
         }
     }
-    impl<T: RedisCache> tonic::server::NamedService for RedisCacheServer<T> {
-        const NAME: &'static str = "rediscache.RedisCache";
+    impl<T: MrCache> tonic::server::NamedService for MrCacheServer<T> {
+        const NAME: &'static str = "mr_cache.MrCache";
     }
 }
