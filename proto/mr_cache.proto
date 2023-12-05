@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package rediscache;
+package mr_cache;
 
-service RedisCache {
+service MrCache {
   // Strings
   rpc SET(KeyValue) returns (Effect);
   rpc MSET(KeyValues) returns (Effects);
