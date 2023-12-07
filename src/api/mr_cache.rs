@@ -55,8 +55,8 @@ pub struct HashedValues {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Effect {
-    #[prost(string, tag = "1")]
-    pub effect: ::prost::alloc::string::String,
+    #[prost(bool, tag = "1")]
+    pub effect: bool,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]

@@ -53,7 +53,7 @@ message HashedValues {
 }
 
 message Effect {
-  string effect = 1;
+  bool effect = 1;
 }
 
 message Effects {
