@@ -1,33 +1,39 @@
-use crate::api::mr_cache::mr_cache_server::{MrCache, MrCacheServer};
+#![allow(dead_code)]
+
+use crate::api::mr_cache::mr_cache_server::MrCache;
 use crate::api::mr_cache::{
     Effect, Effects, HashedKeyValues, HashedValues, Key, KeyValue, KeyValues, Keys, Value, Values,
 };
-
+use r2d2_redis::r2d2::PooledConnection;
+use r2d2_redis::redis::Commands;
+use r2d2_redis::{redis, RedisConnectionManager};
+use std::sync::Arc;
 use tonic::{Request, Response, Status};
 
-use serde::Serialize;
+use crate::api::pool::RedisPool;
 
-#[derive(Serialize, Debug)]
-struct Cache {
-    key: String,
-    value: String,
-}
-
-#[derive(Serialize, Debug)]
 pub struct MrCacheService {
-    cache: &'static Cache,
+    pub(crate) pool: Arc<RedisPool>,
 }
 
 #[tonic::async_trait]
 impl MrCache for MrCacheService {
     async fn set(&self, request: Request<KeyValue>) -> Result<Response<Effect>, Status> {
-        println!("Set: {:?}", request.into_inner());
+        let start = std::time::Instant::now();
+        let kv = request.into_inner();
 
-        // This should implement SET
+        let redis_result: Result<(), redis::RedisError> =
+            self.get_connection()?.set(kv.key, kv.value);
 
-        Ok(Response::new(Effect {
-            effect: "SET gRPC call temp effect".to_string(),
-        }))
+        println!("Redis SET - Time elapsed: {:?}", start.elapsed());
+
+        match redis_result {
+            Ok(_) => Ok(Response::new(Effect { effect: true })),
+            Err(e) => {
+                eprintln!("Failed Redis command SET: {:?}", e);
+                Err(Status::internal("Failed to SET to Redis DB"))
+            }
+        }
     }
 
     async fn mset(&self, request: Request<KeyValues>) -> Result<Response<Effects>, Status> {
@@ -36,14 +42,7 @@ impl MrCache for MrCacheService {
         // This should implement MSET
 
         Ok(Response::new(Effects {
-            effects: vec![
-                Effect {
-                    effect: "MSET gRPC call temp effect 1".to_string(),
-                },
-                Effect {
-                    effect: "MSET gRPC call temp effect 2".to_string(),
-                },
-            ],
+            effects: vec![Effect { effect: true }, Effect { effect: true }],
         }))
     }
 
@@ -79,9 +78,7 @@ impl MrCache for MrCacheService {
 
         // This should implement HSET
 
-        Ok(Response::new(Effect {
-            effect: "HSET gRPC call temp effect".to_string(),
-        }))
+        Ok(Response::new(Effect { effect: true }))
     }
 
     async fn hmget(&self, request: Request<HashedValues>) -> Result<Response<Values>, Status> {
@@ -153,11 +150,11 @@ impl MrCache for MrCacheService {
     }
 }
 
-pub fn init_mr_cache_server() -> MrCacheServer<MrCacheService> {
-    MrCacheServer::new(MrCacheService {
-        cache: Box::leak(Box::new(Cache {
-            key: "key".to_string(),
-            value: "value".to_string(),
-        })),
-    })
+impl MrCacheService {
+    fn get_connection(&self) -> Result<PooledConnection<RedisConnectionManager>, Status> {
+        self.pool.get().map_err(|e| {
+            eprintln!("Failed to get Redis connection: {:?}", e);
+            Status::internal("Failed to connect to Redis DB")
+        })
+    }
 }
