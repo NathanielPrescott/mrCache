@@ -2,7 +2,7 @@
 
 use crate::api::mr_cache::mr_cache_server::MrCache;
 use crate::api::mr_cache::{
-    Effect, Effects, HashedKeyValues, HashedValues, Key, KeyValue, KeyValues, Keys, Value, Values,
+    Effect, HashedKeyValues, HashedValues, Key, KeyValue, KeyValues, Keys, Value, Values,
 };
 use r2d2_redis::r2d2::PooledConnection;
 use r2d2_redis::redis::Commands;
@@ -36,41 +36,76 @@ impl MrCache for MrCacheService {
         }
     }
 
-    async fn mset(&self, request: Request<KeyValues>) -> Result<Response<Effects>, Status> {
-        println!("Set: {:?}", request.into_inner());
+    async fn mset(&self, request: Request<KeyValues>) -> Result<Response<Effect>, Status> {
+        let start = std::time::Instant::now();
+        let kvs = request.into_inner();
 
-        // This should implement MSET
+        let redis_result: Result<(), redis::RedisError> = self.get_connection()?.set_multiple(
+            &*kvs
+                .key_values
+                .iter()
+                .map(|kv| (kv.key.as_str(), kv.value.as_str()))
+                .collect::<Vec<(&str, &str)>>(),
+        );
 
-        Ok(Response::new(Effects {
-            effects: vec![Effect { effect: true }, Effect { effect: true }],
-        }))
+        println!("Redis MSET - Time elapsed: {:?}", start.elapsed());
+
+        match redis_result {
+            Ok(_) => Ok(Response::new(Effect { effect: true })),
+            Err(e) => {
+                eprintln!("Failed Redis command MSET: {:?}", e);
+                Err(Status::internal("Failed to MSET to Redis DB"))
+            }
+        }
     }
 
     async fn get(&self, request: Request<Key>) -> Result<Response<Value>, Status> {
-        println!("Get: {:?}", request.into_inner());
+        let start = std::time::Instant::now();
+        let k = request.into_inner();
 
-        // This should implement GET
+        let redis_result: Result<String, redis::RedisError> = self.get_connection()?.get(k.key);
 
-        Ok(Response::new(Value {
-            value: "GET gRPC call temp value".to_string(),
-        }))
+        println!("Redis GET - Time elapsed: {:?}", start.elapsed());
+
+        match redis_result {
+            Ok(_) => Ok(Response::new(Value {
+                value: redis_result.unwrap_or_default(),
+            })),
+            Err(e) => {
+                eprintln!("Failed Redis command GET: {:?}", e);
+                Err(Status::internal("Failed to GET from Redis DB"))
+            }
+        }
     }
 
     async fn mget(&self, request: Request<Keys>) -> Result<Response<Values>, Status> {
-        println!("Get: {:?}", request.into_inner());
+        let start = std::time::Instant::now();
+        let ks = request.into_inner();
 
-        // This should implement MGET
+        let redis_result: Result<Vec<String>, redis::RedisError> = self.get_connection()?.get(
+            &*ks.keys
+                .iter()
+                .map(|k| k.key.as_str())
+                .collect::<Vec<&str>>(),
+        );
 
-        Ok(Response::new(Values {
-            values: vec![
-                Value {
-                    value: "MGET gRPC call temp value 1".to_string(),
-                },
-                Value {
-                    value: "MGET gRPC call temp value 2".to_string(),
-                },
-            ],
-        }))
+        println!("Redis MGET - Time elapsed: {:?}", start.elapsed());
+
+        match redis_result {
+            Ok(_) => Ok(Response::new(Values {
+                values: redis_result
+                    .unwrap_or_default()
+                    .iter()
+                    .map(|v| Value {
+                        value: v.to_string(),
+                    })
+                    .collect::<Vec<Value>>(),
+            })),
+            Err(e) => {
+                eprintln!("Failed Redis command MGET: {:?}", e);
+                Err(Status::internal("Failed to MGET from Redis DB"))
+            }
+        }
     }
 
     async fn hset(&self, request: Request<HashedKeyValues>) -> Result<Response<Effect>, Status> {

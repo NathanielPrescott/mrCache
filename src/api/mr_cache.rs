@@ -58,12 +58,6 @@ pub struct Effect {
     #[prost(bool, tag = "1")]
     pub effect: bool,
 }
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct Effects {
-    #[prost(message, repeated, tag = "1")]
-    pub effects: ::prost::alloc::vec::Vec<Effect>,
-}
 /// Generated server implementations.
 pub mod mr_cache_server {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
@@ -79,7 +73,7 @@ pub mod mr_cache_server {
         async fn mset(
             &self,
             request: tonic::Request<super::KeyValues>,
-        ) -> std::result::Result<tonic::Response<super::Effects>, tonic::Status>;
+        ) -> std::result::Result<tonic::Response<super::Effect>, tonic::Status>;
         async fn get(
             &self,
             request: tonic::Request<super::Key>,
@@ -238,7 +232,7 @@ pub mod mr_cache_server {
                     struct MSETSvc<T: MrCache>(pub Arc<T>);
                     impl<T: MrCache> tonic::server::UnaryService<super::KeyValues>
                     for MSETSvc<T> {
-                        type Response = super::Effects;
+                        type Response = super::Effect;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
                             tonic::Status,
