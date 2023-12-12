@@ -67,59 +67,140 @@ impl MrCache for MrCacheService {
     }
 
     async fn hset(&self, request: Request<HashedKeyValues>) -> Result<Response<Effect>, Status> {
-        Ok(Response::new(Effect { effect: true }))
+        let start = std::time::Instant::now();
+
+        let inner = request.into_inner();
+        let key = inner.key.unwrap().key;
+        let keyValues = inner.key_values.unwrap().key_values;
+        let fieldValues: Vec<(&str, &str)> = keyValues
+            .iter()
+            .map(|kv| (kv.key.as_str(), kv.value.as_str()))
+            .collect();
+
+        let redis_result: Result<(), RedisError> =
+            self.get_connection()?.hset_multiple(key, &fieldValues);
+
+        match redis_result {
+            Ok(_) => {
+                println!("Redis HSET - Time elapsed: {:?}", start.elapsed());
+
+                Ok(Response::new(Effect { effect: true }))
+            }
+            Err(e) => {
+                eprintln!("Failed Redis command HSET: {:?}", e);
+                Err(Status::internal("Failed to HSET to Redis DB"))
+            }
+        }
     }
 
     async fn hget(&self, request: Request<HashedKeys>) -> Result<Response<Values>, Status> {
-        Ok(Response::new(Values {
-            values: vec![
-                Value {
-                    value: "HMGET gRPC call temp value 1".to_string(),
-                },
-                Value {
-                    value: "HMGET gRPC call temp value 2".to_string(),
-                },
-            ],
-        }))
+        let start = std::time::Instant::now();
+
+        let inner = request.into_inner();
+        let key = inner.key.unwrap().key;
+        let keys = inner.keys.unwrap().keys;
+        let fields: Vec<&str> = keys.iter().map(|k| k.key.as_str()).collect();
+
+        let redis_result: Result<Vec<Option<String>>, RedisError> =
+            self.get_connection()?.hget(key, &fields);
+
+        match redis_result {
+            Ok(results) => {
+                let values: Vec<Value> = results
+                    .into_iter()
+                    .filter_map(|opt| opt.map(|val| Value { value: val }))
+                    .collect();
+
+                println!("Redis HGET - Time elapsed: {:?}", start.elapsed());
+
+                Ok(Response::new(Values { values }))
+            }
+            Err(e) => {
+                eprintln!("Failed Redis command HGET: {:?}", e);
+                Err(Status::internal("Failed to HGET from Redis DB"))
+            }
+        }
     }
 
     async fn hgetall(&self, request: Request<Key>) -> Result<Response<Values>, Status> {
-        Ok(Response::new(Values {
-            values: vec![
-                Value {
-                    value: "HGETALL gRPC call temp value 1".to_string(),
-                },
-                Value {
-                    value: "HGETALL gRPC call temp value 2".to_string(),
-                },
-            ],
-        }))
+        let start = std::time::Instant::now();
+
+        let inner = request.into_inner();
+        let key = inner.key;
+
+        let redis_result: Result<Vec<Option<String>>, RedisError> =
+            self.get_connection()?.hgetall(key);
+
+        match redis_result {
+            Ok(results) => {
+                let values: Vec<Value> = results
+                    .into_iter()
+                    .filter_map(|opt| opt.map(|val| Value { value: val }))
+                    .collect();
+
+                println!("Redis HGETALL - Time elapsed: {:?}", start.elapsed());
+
+                Ok(Response::new(Values { values }))
+            }
+            Err(e) => {
+                eprintln!("Failed Redis command HGETALL: {:?}", e);
+                Err(Status::internal("Failed to HGETALL from Redis DB"))
+            }
+        }
     }
 
     async fn hkeys(&self, request: Request<Key>) -> Result<Response<Keys>, Status> {
-        Ok(Response::new(Keys {
-            keys: vec![
-                Key {
-                    key: "HKEYS gRPC call temp key 1".to_string(),
-                },
-                Key {
-                    key: "HKEYS gRPC call temp key 2".to_string(),
-                },
-            ],
-        }))
+        let start = std::time::Instant::now();
+
+        let inner = request.into_inner();
+        let key = inner.key;
+
+        let redis_result: Result<Vec<Option<String>>, RedisError> =
+            self.get_connection()?.hkeys(key);
+
+        match redis_result {
+            Ok(results) => {
+                let keys: Vec<Key> = results
+                    .into_iter()
+                    .filter_map(|opt| opt.map(|k| Key { key: k }))
+                    .collect();
+
+                println!("Redis HKEYS - Time elapsed: {:?}", start.elapsed());
+
+                Ok(Response::new(Keys { keys }))
+            }
+            Err(e) => {
+                eprintln!("Failed Redis command HKEYS: {:?}", e);
+                Err(Status::internal("Failed to HKEYS from Redis DB"))
+            }
+        }
     }
 
     async fn hvals(&self, request: Request<Key>) -> Result<Response<Values>, Status> {
-        Ok(Response::new(Values {
-            values: vec![
-                Value {
-                    value: "HVALS gRPC call temp value 1".to_string(),
-                },
-                Value {
-                    value: "HVALS gRPC call temp value 2".to_string(),
-                },
-            ],
-        }))
+        let start = std::time::Instant::now();
+
+        let inner = request.into_inner();
+        let key = inner.key;
+
+        let redis_result: Result<Vec<Option<String>>, RedisError> =
+            self.get_connection()?.hvals(key);
+
+        match redis_result {
+            Ok(results) => {
+                let values: Vec<Value> = results
+                    .into_iter()
+                    .filter_map(|opt| opt.map(|val| Value { value: val }))
+                    .collect();
+
+                println!("Redis HVALS - Time elapsed: {:?}", start.elapsed());
+
+                Ok(Response::new(Values { values }))
+            }
+            Err(e) => {
+                eprintln!("Failed Redis command HVALS: {:?}", e);
+                Err(Status::internal("Failed to HVALS from Redis DB"))
+            }
+        }
     }
 }
 
