@@ -46,11 +46,11 @@ pub struct HashedKeyValues {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct HashedValues {
+pub struct HashedKeys {
     #[prost(message, optional, tag = "1")]
     pub key: ::core::option::Option<Key>,
     #[prost(message, optional, tag = "2")]
-    pub values: ::core::option::Option<Values>,
+    pub keys: ::core::option::Option<Keys>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -68,17 +68,9 @@ pub mod mr_cache_server {
         /// Strings
         async fn set(
             &self,
-            request: tonic::Request<super::KeyValue>,
-        ) -> std::result::Result<tonic::Response<super::Effect>, tonic::Status>;
-        async fn mset(
-            &self,
             request: tonic::Request<super::KeyValues>,
         ) -> std::result::Result<tonic::Response<super::Effect>, tonic::Status>;
         async fn get(
-            &self,
-            request: tonic::Request<super::Key>,
-        ) -> std::result::Result<tonic::Response<super::Value>, tonic::Status>;
-        async fn mget(
             &self,
             request: tonic::Request<super::Keys>,
         ) -> std::result::Result<tonic::Response<super::Values>, tonic::Status>;
@@ -87,9 +79,9 @@ pub mod mr_cache_server {
             &self,
             request: tonic::Request<super::HashedKeyValues>,
         ) -> std::result::Result<tonic::Response<super::Effect>, tonic::Status>;
-        async fn hmget(
+        async fn hget(
             &self,
-            request: tonic::Request<super::HashedValues>,
+            request: tonic::Request<super::HashedKeys>,
         ) -> std::result::Result<tonic::Response<super::Values>, tonic::Status>;
         async fn hgetall(
             &self,
@@ -186,7 +178,7 @@ pub mod mr_cache_server {
                 "/mr_cache.MrCache/SET" => {
                     #[allow(non_camel_case_types)]
                     struct SETSvc<T: MrCache>(pub Arc<T>);
-                    impl<T: MrCache> tonic::server::UnaryService<super::KeyValue>
+                    impl<T: MrCache> tonic::server::UnaryService<super::KeyValues>
                     for SETSvc<T> {
                         type Response = super::Effect;
                         type Future = BoxFuture<
@@ -195,7 +187,7 @@ pub mod mr_cache_server {
                         >;
                         fn call(
                             &mut self,
-                            request: tonic::Request<super::KeyValue>,
+                            request: tonic::Request<super::KeyValues>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
@@ -227,63 +219,19 @@ pub mod mr_cache_server {
                     };
                     Box::pin(fut)
                 }
-                "/mr_cache.MrCache/MSET" => {
-                    #[allow(non_camel_case_types)]
-                    struct MSETSvc<T: MrCache>(pub Arc<T>);
-                    impl<T: MrCache> tonic::server::UnaryService<super::KeyValues>
-                    for MSETSvc<T> {
-                        type Response = super::Effect;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
-                        fn call(
-                            &mut self,
-                            request: tonic::Request<super::KeyValues>,
-                        ) -> Self::Future {
-                            let inner = Arc::clone(&self.0);
-                            let fut = async move {
-                                <T as MrCache>::mset(&inner, request).await
-                            };
-                            Box::pin(fut)
-                        }
-                    }
-                    let accept_compression_encodings = self.accept_compression_encodings;
-                    let send_compression_encodings = self.send_compression_encodings;
-                    let max_decoding_message_size = self.max_decoding_message_size;
-                    let max_encoding_message_size = self.max_encoding_message_size;
-                    let inner = self.inner.clone();
-                    let fut = async move {
-                        let inner = inner.0;
-                        let method = MSETSvc(inner);
-                        let codec = tonic::codec::ProstCodec::default();
-                        let mut grpc = tonic::server::Grpc::new(codec)
-                            .apply_compression_config(
-                                accept_compression_encodings,
-                                send_compression_encodings,
-                            )
-                            .apply_max_message_size_config(
-                                max_decoding_message_size,
-                                max_encoding_message_size,
-                            );
-                        let res = grpc.unary(method, req).await;
-                        Ok(res)
-                    };
-                    Box::pin(fut)
-                }
                 "/mr_cache.MrCache/GET" => {
                     #[allow(non_camel_case_types)]
                     struct GETSvc<T: MrCache>(pub Arc<T>);
-                    impl<T: MrCache> tonic::server::UnaryService<super::Key>
+                    impl<T: MrCache> tonic::server::UnaryService<super::Keys>
                     for GETSvc<T> {
-                        type Response = super::Value;
+                        type Response = super::Values;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
                             tonic::Status,
                         >;
                         fn call(
                             &mut self,
-                            request: tonic::Request<super::Key>,
+                            request: tonic::Request<super::Keys>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
@@ -300,50 +248,6 @@ pub mod mr_cache_server {
                     let fut = async move {
                         let inner = inner.0;
                         let method = GETSvc(inner);
-                        let codec = tonic::codec::ProstCodec::default();
-                        let mut grpc = tonic::server::Grpc::new(codec)
-                            .apply_compression_config(
-                                accept_compression_encodings,
-                                send_compression_encodings,
-                            )
-                            .apply_max_message_size_config(
-                                max_decoding_message_size,
-                                max_encoding_message_size,
-                            );
-                        let res = grpc.unary(method, req).await;
-                        Ok(res)
-                    };
-                    Box::pin(fut)
-                }
-                "/mr_cache.MrCache/MGET" => {
-                    #[allow(non_camel_case_types)]
-                    struct MGETSvc<T: MrCache>(pub Arc<T>);
-                    impl<T: MrCache> tonic::server::UnaryService<super::Keys>
-                    for MGETSvc<T> {
-                        type Response = super::Values;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
-                        fn call(
-                            &mut self,
-                            request: tonic::Request<super::Keys>,
-                        ) -> Self::Future {
-                            let inner = Arc::clone(&self.0);
-                            let fut = async move {
-                                <T as MrCache>::mget(&inner, request).await
-                            };
-                            Box::pin(fut)
-                        }
-                    }
-                    let accept_compression_encodings = self.accept_compression_encodings;
-                    let send_compression_encodings = self.send_compression_encodings;
-                    let max_decoding_message_size = self.max_decoding_message_size;
-                    let max_encoding_message_size = self.max_encoding_message_size;
-                    let inner = self.inner.clone();
-                    let fut = async move {
-                        let inner = inner.0;
-                        let method = MGETSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -403,11 +307,11 @@ pub mod mr_cache_server {
                     };
                     Box::pin(fut)
                 }
-                "/mr_cache.MrCache/HMGET" => {
+                "/mr_cache.MrCache/HGET" => {
                     #[allow(non_camel_case_types)]
-                    struct HMGETSvc<T: MrCache>(pub Arc<T>);
-                    impl<T: MrCache> tonic::server::UnaryService<super::HashedValues>
-                    for HMGETSvc<T> {
+                    struct HGETSvc<T: MrCache>(pub Arc<T>);
+                    impl<T: MrCache> tonic::server::UnaryService<super::HashedKeys>
+                    for HGETSvc<T> {
                         type Response = super::Values;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -415,11 +319,11 @@ pub mod mr_cache_server {
                         >;
                         fn call(
                             &mut self,
-                            request: tonic::Request<super::HashedValues>,
+                            request: tonic::Request<super::HashedKeys>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as MrCache>::hmget(&inner, request).await
+                                <T as MrCache>::hget(&inner, request).await
                             };
                             Box::pin(fut)
                         }
@@ -431,7 +335,7 @@ pub mod mr_cache_server {
                     let inner = self.inner.clone();
                     let fut = async move {
                         let inner = inner.0;
-                        let method = HMGETSvc(inner);
+                        let method = HGETSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(

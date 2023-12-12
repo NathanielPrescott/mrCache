@@ -1,7 +1,6 @@
-use r2d2_redis::{r2d2, RedisConnectionManager};
 use std::sync::Arc;
 
-pub type RedisPool = r2d2::Pool<RedisConnectionManager>;
+pub type RedisPool = r2d2::Pool<redis::Client>;
 
 pub struct Pool {
     pool: Arc<RedisPool>,
@@ -14,11 +13,13 @@ impl Pool {
         let connection_info = "redis://".to_string() + ip + ":" + port;
 
         let start = std::time::Instant::now();
-        let manager =
-            RedisConnectionManager::new(connection_info).expect("Failed to create Redis manager");
-        let pool = r2d2::Pool::builder()
-            .build(manager)
-            .expect("Failed to create Redis pool");
+
+        let client: redis::Client =
+            redis::Client::open(connection_info).expect("Failed to open connection manager.");
+        let pool: r2d2::Pool<redis::Client> = r2d2::Pool::builder()
+            .build(client)
+            .expect("Failed to create/connect Redis pool.");
+
         println!("Redis New Pool - Time elapsed: {:?}", start.elapsed());
 
         Self {

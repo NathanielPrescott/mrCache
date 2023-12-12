@@ -4,14 +4,12 @@ package mr_cache;
 
 service MrCache {
   // Strings
-  rpc SET(KeyValue) returns (Effect);
-  rpc MSET(KeyValues) returns (Effect);
-  rpc GET(Key) returns (Value);
-  rpc MGET(Keys) returns (Values);
+  rpc SET(KeyValues) returns (Effect);
+  rpc GET(Keys) returns (Values);
 
   // Hashes (Should I rename the messages instead of reusing the key/value ones?)
   rpc HSET(HashedKeyValues) returns (Effect);
-  rpc HMGET(HashedValues) returns (Values);
+  rpc HGET(HashedKeys) returns (Values);
   rpc HGETALL(Key) returns (Values);
   rpc HKEYS(Key) returns (Keys);
   rpc HVALS(Key) returns (Values);
@@ -47,9 +45,9 @@ message HashedKeyValues {
   KeyValues keyValues = 2;
 }
 
-message HashedValues {
+message HashedKeys {
   Key key = 1;
-  Values values = 2;
+  Keys keys = 2;
 }
 
 message Effect {
