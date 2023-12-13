@@ -33,10 +33,7 @@ impl MrCache for MrCacheService {
 
                 Ok(Response::new(Effect { effect: true }))
             }
-            Err(e) => {
-                eprintln!("Failed Redis command SET: {:?}", e);
-                Err(Status::internal("Failed to SET to Redis DB"))
-            }
+            Err(e) => Err(self.handle_redis_error(e, "SET")),
         }
     }
 
@@ -59,10 +56,7 @@ impl MrCache for MrCacheService {
 
                 Ok(Response::new(Values { values }))
             }
-            Err(e) => {
-                eprintln!("Failed Redis command GET: {:?}", e);
-                Err(Status::internal("Failed to GET from Redis DB"))
-            }
+            Err(e) => Err(self.handle_redis_error(e, "GET")),
         }
     }
 
@@ -86,10 +80,7 @@ impl MrCache for MrCacheService {
 
                 Ok(Response::new(Effect { effect: true }))
             }
-            Err(e) => {
-                eprintln!("Failed Redis command HSET: {:?}", e);
-                Err(Status::internal("Failed to HSET to Redis DB"))
-            }
+            Err(e) => Err(self.handle_redis_error(e, "HSET")),
         }
     }
 
@@ -115,10 +106,7 @@ impl MrCache for MrCacheService {
 
                 Ok(Response::new(Values { values }))
             }
-            Err(e) => {
-                eprintln!("Failed Redis command HGET: {:?}", e);
-                Err(Status::internal("Failed to HGET from Redis DB"))
-            }
+            Err(e) => Err(self.handle_redis_error(e, "HGET")),
         }
     }
 
@@ -142,10 +130,7 @@ impl MrCache for MrCacheService {
 
                 Ok(Response::new(Values { values }))
             }
-            Err(e) => {
-                eprintln!("Failed Redis command HGETALL: {:?}", e);
-                Err(Status::internal("Failed to HGETALL from Redis DB"))
-            }
+            Err(e) => Err(self.handle_redis_error(e, "HGETALL")),
         }
     }
 
@@ -169,10 +154,7 @@ impl MrCache for MrCacheService {
 
                 Ok(Response::new(Keys { keys }))
             }
-            Err(e) => {
-                eprintln!("Failed Redis command HKEYS: {:?}", e);
-                Err(Status::internal("Failed to HKEYS from Redis DB"))
-            }
+            Err(e) => Err(self.handle_redis_error(e, "HKEYS")),
         }
     }
 
@@ -196,10 +178,7 @@ impl MrCache for MrCacheService {
 
                 Ok(Response::new(Values { values }))
             }
-            Err(e) => {
-                eprintln!("Failed Redis command HVALS: {:?}", e);
-                Err(Status::internal("Failed to HVALS from Redis DB"))
-            }
+            Err(e) => Err(self.handle_redis_error(e, "HVALS")),
         }
     }
 }
@@ -210,5 +189,10 @@ impl MrCacheService {
             eprintln!("Failed to get Redis connection: {:?}", e);
             Status::internal("Failed to connect to Redis DB")
         })
+    }
+
+    fn handle_redis_error(&self, e: RedisError, cmd: &str) -> Status {
+        eprintln!("Failed Redis command {}: {:?}", cmd, e);
+        Status::internal("Failed to use ".to_string() + cmd + " from Redis DB")
     }
 }
