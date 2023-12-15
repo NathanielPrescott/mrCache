@@ -5,7 +5,7 @@ use crate::api::mr_cache::{
     Effect, HashedKeyValues, HashedKeys, Key, KeyValues, Keys, Value, Values,
 };
 use r2d2::PooledConnection;
-use redis::{Client, Cmd, Commands, RedisError, RedisResult};
+use redis::{Client, Commands, RedisResult};
 use std::sync::Arc;
 use tonic::{Request, Response, Status};
 
@@ -25,18 +25,22 @@ impl MrCache for MrCacheService {
             .map(|kv| (kv.key.as_str(), kv.value.as_str()))
             .collect();
 
-        self.set_redis_cmd("SET", |mut con| con.mset(&keyValues))
-            .await
+        self.execute_redis_cmd(
+            "SET",
+            |mut con| con.mset(&keyValues),
+            |_: ()| Effect { effect: true },
+        )
+        .await
     }
 
     async fn get(&self, request: Request<Keys>) -> Result<Response<Values>, Status> {
         let inner = request.into_inner();
         let keys: Vec<&str> = inner.keys.iter().map(|k| k.key.as_str()).collect();
 
-        self.retrieve_redis_cmd(
+        self.execute_redis_cmd(
             "GET",
             |mut con| con.mget(keys),
-            |results| {
+            |results: Vec<Option<String>>| {
                 let values: Vec<Value> = results
                     .into_iter()
                     .filter_map(|opt| opt.map(|val| Value { value: val }))
@@ -56,8 +60,12 @@ impl MrCache for MrCacheService {
             .map(|kv| (kv.key.as_str(), kv.value.as_str()))
             .collect();
 
-        self.set_redis_cmd("HSET", |mut con| con.hset_multiple(key, &fieldValues))
-            .await
+        self.execute_redis_cmd(
+            "HSET",
+            |mut con| con.hset_multiple(key, &fieldValues),
+            |_: ()| Effect { effect: true },
+        )
+        .await
     }
 
     async fn hget(&self, request: Request<HashedKeys>) -> Result<Response<Values>, Status> {
@@ -66,10 +74,10 @@ impl MrCache for MrCacheService {
         let keys = inner.keys.unwrap().keys;
         let fields: Vec<&str> = keys.iter().map(|k| k.key.as_str()).collect();
 
-        self.retrieve_redis_cmd(
+        self.execute_redis_cmd(
             "HGET",
             |mut con| con.hget(key, &fields),
-            |results| {
+            |results: Vec<Option<String>>| {
                 let values: Vec<Value> = results
                     .into_iter()
                     .filter_map(|opt| opt.map(|val| Value { value: val }))
@@ -84,10 +92,10 @@ impl MrCache for MrCacheService {
         let inner = request.into_inner();
         let key = inner.key;
 
-        self.retrieve_redis_cmd(
+        self.execute_redis_cmd(
             "HGETALL",
             |mut con| con.hgetall(key),
-            |results| {
+            |results: Vec<Option<String>>| {
                 let values: Vec<Value> = results
                     .into_iter()
                     .filter_map(|opt| opt.map(|val| Value { value: val }))
@@ -102,10 +110,10 @@ impl MrCache for MrCacheService {
         let inner = request.into_inner();
         let key = inner.key;
 
-        self.retrieve_redis_cmd(
+        self.execute_redis_cmd(
             "HKEYS",
             |mut con| con.hkeys(key),
-            |results| {
+            |results: Vec<Option<String>>| {
                 let keys: Vec<Key> = results
                     .into_iter()
                     .filter_map(|opt| opt.map(|k| Key { key: k }))
@@ -120,10 +128,10 @@ impl MrCache for MrCacheService {
         let inner = request.into_inner();
         let key = inner.key;
 
-        self.retrieve_redis_cmd(
+        self.execute_redis_cmd(
             "HVALS",
             |mut con| con.hvals(key),
-            |results| {
+            |results: Vec<Option<String>>| {
                 let values: Vec<Value> = results
                     .into_iter()
                     .filter_map(|opt| opt.map(|val| Value { value: val }))
@@ -143,49 +151,29 @@ impl MrCacheService {
         })
     }
 
-    fn handle_redis_error(&self, e: RedisError, cmd: &str) -> Status {
-        eprintln!("Failed Redis command {}: {:?}", cmd, e);
-        Status::internal("Failed to use ".to_string() + cmd + " from Redis DB")
-    }
-
-    async fn retrieve_redis_cmd<T, F, G>(
+    async fn execute_redis_cmd<T, F, G, R>(
         &self,
         cmd: &str,
         redis_cmd: F,
         transform: G,
-    ) -> Result<Response<T>, Status>
+    ) -> Result<Response<R>, Status>
     where
-        F: FnOnce(PooledConnection<Client>) -> RedisResult<Vec<Option<String>>>,
-        G: FnOnce(Vec<Option<String>>) -> T,
+        F: FnOnce(PooledConnection<Client>) -> RedisResult<T>,
+        G: FnOnce(T) -> R,
     {
         let start = std::time::Instant::now();
-        let redis_result = redis_cmd(self.get_connection()?);
 
-        match redis_result {
+        match redis_cmd(self.get_connection()?) {
             Ok(results) => {
                 let transformed = transform(results);
                 println!("Redis {} - Time elapsed: {:?}", cmd, start.elapsed());
 
                 Ok(Response::new(transformed))
             }
-            Err(e) => Err(self.handle_redis_error(e, cmd)),
-        }
-    }
-
-    async fn set_redis_cmd<F>(&self, cmd: &str, redis_cmd: F) -> Result<Response<Effect>, Status>
-    where
-        F: FnOnce(PooledConnection<Client>) -> RedisResult<()>,
-    {
-        let start = std::time::Instant::now();
-        let redis_result = redis_cmd(self.get_connection()?);
-
-        match redis_result {
-            Ok(_) => {
-                println!("Redis {} - Time elapsed: {:?}", cmd, start.elapsed());
-
-                Ok(Response::new(Effect { effect: true }))
-            }
-            Err(e) => Err(self.handle_redis_error(e, cmd)),
+            Err(e) => Err({
+                eprintln!("Failed Redis command {}: {:?}", cmd, e);
+                Status::internal("Failed to use ".to_string() + cmd + " from Redis DB")
+            }),
         }
     }
 }
