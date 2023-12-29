@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use std::time::Duration;
 
 pub type RedisPool = r2d2::Pool<redis::Client>;
 
@@ -17,6 +18,7 @@ impl Pool {
         let client: redis::Client =
             redis::Client::open(connection_info).expect("Failed to open connection manager.");
         let pool: r2d2::Pool<redis::Client> = r2d2::Pool::builder()
+            .connection_timeout(Duration::from_millis(200))
             .build(client)
             .expect("Failed to create/connect Redis pool.");
 
