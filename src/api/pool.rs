@@ -8,7 +8,7 @@ pub struct Pool {
 
 impl Pool {
     pub fn new() -> Self {
-        let ip = "127.0.0.1"; //TODO: Extract to config
+        let ip = "host.docker.internal"; //TODO: Extract to config
         let port = "6379"; //TODO: Extract to config
         let connection_info = "redis://".to_string() + ip + ":" + port;
 
