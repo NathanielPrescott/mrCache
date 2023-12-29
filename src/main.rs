@@ -19,7 +19,7 @@ async fn main() {
     println!("Starting server...");
     println!("gRPC listening on: http://localhost:{}", grpc_port);
 
-    let address = ("[::1]:".to_owned() + grpc_port).parse().unwrap();
+    let address = ("0.0.0.0:".to_owned() + grpc_port).parse().unwrap();
 
     Server::builder()
         .add_service(MrCacheServer::new(MrCacheService {
@@ -27,5 +27,5 @@ async fn main() {
         }))
         .serve(address)
         .await
-        .unwrap()
+        .expect("Server failed to start!")
 }

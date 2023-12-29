@@ -14,7 +14,11 @@ I have built with the following versions.
     Redis: 7.2
     Docker: 24.0.7
 
-I have currently setup and tested mrCache agaisnt a redis server running in a docker container.
+I have currently setup and tested mrCache against a redis DB while running both in docker containers.
+
+    docker build -t mrcache .
+    docker run --name redis -p 6379:6379 -d redis:7.2
+    docker run --name mrCache -p 50051:50051 mrcache
 
 ## Future Features
 _______________

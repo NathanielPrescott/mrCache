@@ -1,7 +1,0 @@
-version: '3'
-services:
-  mrCache:
-    image: mrcache-service
-    build:
-      context: .
-      dockerfile: Dockerfile
