@@ -1,7 +1,7 @@
 ## What is mrCache?
 _______________
 
-The goal of mrCache (Microservice Redis Cache) is to allow for fast setup and integration with a microservice built to handle redis caching. 
+The goal of mrCache (Microservice Rudimentary Cache) is to allow for fast setup and integration with a microservice built to handle redis caching. 
 Aside from the time spent starting up the redis server and mrCache, the majority of setup should be done with integrating with mrCache's API.
 The cache will have a gRPC interface first and I may look at adding a REST interface later on if people want it.
 
